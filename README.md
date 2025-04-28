@@ -26,7 +26,9 @@ Testing
   •	Separación en capas: Controller, Service, Repository, Model.
   
 Diagrama de Clases. Entidades principales:
-  •	Usuario: puede registrar espectáculos.
+
+  ![image](https://github.com/user-attachments/assets/880bbfb4-5efb-49b8-9339-e5447119e345)
+•	Usuario: puede registrar espectáculos.
   •	Sala (abstracta): representa un espacio físico donde se realizan espectáculos.
     o	SalaCerrada: sala cerrada con distintos tipos de precio.
     o	Anfiteatro: sala abierta con precio único.
