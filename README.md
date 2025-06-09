@@ -189,9 +189,12 @@ API para la gestion de salas, shows y venta de entradas de teatro, desarrollada 
 
 Indicaciones:
   •	Para bajar la imagen de docker y poder correr la API tenes que:
-    Clonar el repositorio: 
-      git clone https://github.com/tu-usuario/teatro-api.git
-      cd teatro-api
+      Clonar el repositorio: 
+        git clone https://github.com/tu-usuario/teatro-api.git
+        cd teatro-api
+  • Configurar las variables del entorno:
+      Copiar el archivo .env.example a .env y completar los valores necesarios, solo falta DB_PASSWORD
+        cp .env.example .env
   •	Ejecutar con Docker Compose:
       npm run docker:up
   • Para ver que se hayan creado correctamente la imagen y los contenedores esten corriendo: 
