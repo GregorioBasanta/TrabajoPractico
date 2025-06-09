@@ -125,31 +125,46 @@ Arquitectura del Proyecto
   •	Separación en capas: Controller, Service, Repository, DTOs y Entities
 
 Diagrama de Clases
+![image](https://github.com/user-attachments/assets/16ab8bac-7125-4d6b-a407-10c5a20f6305)
+
   Entidades principales
-    •	Usuario: Puede registrar espectáculos
+    •	Usuario: Se lo asocia con una entrada. Es como si la sacara, pero no es el que maneja la logica del negocio.
     •	Sala (abstracta): Representa un espacio físico donde se realizan espectáculos
     •	SalaCerrada: Sala cerrada con distintos tipos de precio
     •	Anfiteatro: Sala abierta con precio único
-    •	Show: Representa un show en una sala, con fecha, hora y precio
-    •	Entrada: Representa la compra de una entrada para un espectáculo
+    •	Show: Representa un show en una sala, con fecha, hora y precio. Esta se carga sin ningun usuario administrador.
+    •	Entrada: Representa la compra de una entrada para un espectáculo.
 
 Modelo de Datos (Base de Datos)
   Tablas principales  
     •	usuario { id, nombre, email }
-    •	sala { id, nombre, capacidad, tipo_precio }
-    •	espectaculo { id, artista, fecha, hora, precio_entrada, duracion, tipo_show, sala_id, usuario_id }
-    •	entrada { id, fecha_compra, precio, espectaculo_id }
+    •	sala { id }
+    •	espectaculo { id, nombre, artista, fecha, hora, duracion, tipo_show, capacidadDisponible, sala_id }
+    •	entrada { id, fecha_compra, tiop, precio, show_id, usuario_id }
   
   Diagrama Entidad-Relación
     •	usuario (1) ------ (N) entrada
-    •	sala (1) ------ (N) espectaculo
-    •	espectaculo (1) ------ (N) entrada
+    •	sala (1) ------ (N) show
+    •	show (1) ------ (N) entrada
   
-  Endpoints principales de la API
-    •	GET /api/espectaculos: Listar espectáculos disponibles
-    •	POST /api/espectaculos: Registrar un nuevo espectáculo
-    •	POST /api/entradas: Comprar una entrada para un espectáculo
-    •	GET /api/entradas/{id}: Consultar los datos de una entrada comprada
+Endpoints principales de la API
+  •	POST /api/shows: Registrar un nuevo espectáculo
+  •	GET /api/shows: Listar espectáculos disponibles
+  •	POST /api/entradas: Comprar una entrada para un espectáculo
+  •	GET /api/entradas: Listar las entradas disponibles
+  •	POST /api/usuarios: Registrar un nuevo usuario
+  •	GET /api/usuarios: Listar usuarios disponibles
+  •	GET /api/salas: Listar salas disponibles
+
+Endpoints secundarios de la API 
+  •	GET /api/shows/{id}: Listar un espectáculo por id
+  •	GET /api/entradas/{id}: Listar una entrada por id 
+  •	GET /api/usuarios/{id}: Listar un usuario por id
+
+Endpoints terciaros de la API
+  Le pongo endpoints terciarios, aunque en realidad son importantes, pero estos se utilizan dentro de los service para actualizar la base de datos con la lógica del negocio.
+  •	PUT /api/shows: Actualiza un show 
+  •	GET /api/show/{id}/disponibilidad: Verifica la disponibilidad de un show con el id.
 
 Testing
   •	Pruebas unitarias de servicios con Jest
@@ -186,8 +201,56 @@ Indicaciones:
 
 Comandos útiles
 
-Comando                                               Descripción
-docker-compose down                                   Detener y eliminar contenedores
-docker-compose logs -f api                            Ver logs de la API
-docker-compose exec db psql -U user -d teatro-db      Acceder a la base de datos
-docker-compose restart api                            Reiniciar solo el servicio API
+      Comando                                               Descripción
+      npm run docker:down                                   Detener y eliminar contenedores
+      npm run docker:up                                     Arrancar y crear o recrear contenedores
+      npm run docker:ps                                     Para ver si arrancaron correctamente los contenedores
+      docker-compose logs -f api                            Ver logs de la API
+      docker-compose exec db psql -U postgres -d teatro-db      Acceder a la base de datos
+      docker-compose restart api                            Reiniciar solo el servicio API
+      npm run test                                          Para realizar los testeos unitarios.
+      docker-compose exec api npm run test:e2e              Para realizar un testeo e2e.
+
+JSON utiles para probar los POST
+Para empezar aclarar que solo existen dos salas, estas las cargue manualmente ya que solo existen dos. Esto lo deberia haber echo con un metodo POST para hacerlo mas escalable, me di cuenta cuando cargue la base de datos. Tambien junto con salas cometi el error de hacer poco escalable, que estas tienen su dato de capacidad y de precio de las entradas fijo.
+Las demas clases se cargan con los siguientes JSON.
+
+•	JSON para Usuarios:
+    {
+  "nombre": "Lucía González",
+  "email": "lucia@example.com"
+    }
+
+•	JSON para shows:
+    {
+      "nombre": "Stand Up Night",
+      "artista": "Juan Pérez",
+      "fecha": "2025-06-15",
+      "hora": "21:00",
+      "duracion": 90,
+      "tipo": "musical",
+      "salaId": 1
+    }
+•	JSON para entradas:
+    {
+      "usuarioId": 2,
+      "showId": 1,
+      "tipoEntrada": 1
+    }
+
+Al cargar los datos hay que tener en cuenta varios puntos:
+  • Los id son autoincrementales.
+  •	En show, la fecha y la hora se puede superponer con otro show, ademas, hay una hora de limpieza antes de cada show. Habria que agregar un horario de trabajo por ejemplo de 08:00hs a 24:00hs.
+  •	En show, el tipo solo puede ser "infantil", "musical", "obra de teatro".
+  •	En show, la salaId sera 1 o 2. Son las unicas salas creadas.
+  •	En entradas, se debera pasar un id de usuario y show valido, se puede pasar un id de show que exista pero la obra ya haya pasado, en este caso se devolvera un error. Se podria agregar que si el usuario ya tiene una funcion en ese horario no pueda sacar otra.
+  •	En entradas, el parametro de tipoEntrada solo puede ser 1 o 2, sino arrojara un error. Esto es para cuando el show se lleva en la sala cerrada, ya que el costo sera distinto. Si la sala en el anfiteatro, es indiferente que numero se pase ya que no se tendra en cuenta el dato. Habria que mejorar el sistema de entradas entre tipo 1 o 2, como por ejemplo, poner que cantidad habria de cada una. En este programa se trabaja de la misma forma que tipo de entrada sea, lo unico que cambia es el valor.
+
+Puntos a mejorar en un futuruo.
+  •	Se podria crear un sistema de login para que el usuario final sea el que saca las entradas, o que el usuario administrador solo pueda crear shows o nuevas salas.
+  •	Como ya fue mencionado, que las salas puedan crearse con mas o menos espacio, o este se pueda actualizar, por si se remodala la sala por ejemplo. Y que los precios sean modificables.
+  •	Tambien fue mencionado, pero que los shows tengan horarios limites, para que no se puedan cargar falsos shows en los horarios donde el teatro esta cerrado.
+  •	Un sistema de gestion de dinero para realmente realizar el pago de la entrada.
+  •	Un sistema de eleccion de asientos. Aca tambien se podria agregar el metodo de tipo de entrada antes mencionado, para que haya x cantidad de cada una.
+  •	Un sistema de gestion de puntos para los usuarios. Como si fuera un beneficio.
+  •	Que filtre la busqueda para los shows que solo estan en cartelera o son proximos y que no se muestren todos.
